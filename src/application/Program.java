@@ -33,7 +33,7 @@ public class Program {
 				sc.nextLine();
 			} 
 			catch (InputMismatchException e) {
-				System.out.println("Error reading ChessPosition. Valid values are from a1 to h8");
+				System.out.println("Error reading ChessPosition. Valid values are from a1 to h8.");
 				sc.nextLine();
 			}
 		}
