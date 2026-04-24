@@ -1,5 +1,7 @@
 package boardgame;
 
+import javax.sql.rowset.JoinRowSet;
+
 public class Position {
 	
 	private Integer row;
@@ -27,6 +29,11 @@ public class Position {
 	}
 
 	public void setColumn(Integer column) {
+		this.column = column;
+	}
+	
+	public void setValues(int row, int column) {
+		this.row = row;
 		this.column = column;
 	}
 	
