@@ -1,11 +1,20 @@
 package application;
 
-import chess.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import java.util.Arrays;
+import java.util.List;
+
+import chess.ChessMatch;
+import chess.ChessPiece;
+import chess.ChessPosition;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
 public class ChessBoardUI {
 
@@ -64,7 +73,7 @@ public class ChessBoardUI {
 	}
 
 	private HBox buildTopBar() {
-		HBox bar = new HBox(20);
+		HBox bar = new HBox(15);
 		bar.setStyle("-fx-background-color: #333; -fx-padding: 10px;");
 
 		Label whiteLabel = new Label("WHITE: ");
@@ -73,7 +82,15 @@ public class ChessBoardUI {
 		Label blackLabel = new Label("BLACK: ");
 		blackLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
 
-		bar.getChildren().addAll(whiteLabel, whiteTimerLabel, blackLabel, blackTimerLabel);
+		Button btnSave = new Button("Save");
+		btnSave.setStyle("-fx-background-color: #4caf50; " + "-fx-text-fill: white; " + "-fx-font-weight: bold;");
+		btnSave.setOnAction(e -> GameSaver.save(moveHistory.getMoves()));
+
+		Button btnLoad = new Button("Load");
+		btnLoad.setStyle("-fx-background-color: #2196f3; " + "-fx-text-fill: white; " + "-fx-font-weight: bold;");
+		btnLoad.setOnAction(e -> loadGame());
+
+		bar.getChildren().addAll(whiteLabel, whiteTimerLabel, blackLabel, blackTimerLabel, btnSave, btnLoad);
 		return bar;
 	}
 
@@ -190,6 +207,24 @@ public class ChessBoardUI {
 			possibleMoves = null;
 			root.setCenter(buildBoard());
 		}
+	}
+
+	private void loadGame() {
+		String[] saves = GameSaver.getSavedGames();
+
+		if (saves == null || saves.length == 0) {
+			System.out.println("No saved games found!");
+			return;
+		}
+
+		Arrays.sort(saves);
+		String latest = "saves/" + saves[saves.length - 1];
+
+		List<String> moves = GameSaver.load(latest);
+		System.out.println("Loaded " + moves.size() + " moves from " + latest);
+
+		moveHistory.clear();
+		moveHistory.loadMoves(moves);
 	}
 
 	private HBox buildStatusBar() {
