@@ -9,196 +9,210 @@ import javafx.scene.control.Label;
 
 public class ChessBoardUI {
 
-    private BorderPane root;
-    private GridPane grid;
-    private ChessMatch chessMatch;
-    private ChessPosition sourcePosition;
-    private boolean[][] possibleMoves;
+	private BorderPane root;
+	private GridPane grid;
+	private ChessMatch chessMatch;
+	private ChessPosition sourcePosition;
+	private boolean[][] possibleMoves;
+	private MoveHistory moveHistory;
 
-    private Label whiteTimerLabel;
-    private Label blackTimerLabel;
-    private TimerController whiteTimer;
-    private TimerController blackTimer;
-  
-    private static final Color LIGHT = Color.web("#f0d9b5");
-    private static final Color DARK = Color.web("#b58863");
-    private static final Color HIGHLIGHT = Color.web("#7fc97f", 0.6);
-    private static final Color SELECTED = Color.web("#f6f669", 0.5);
-    private static final int TIMER_SECONDS = 600;
+	private Label whiteTimerLabel;
+	private Label blackTimerLabel;
+	private TimerController whiteTimer;
+	private TimerController blackTimer;
 
-    public ChessBoardUI() {
-        chessMatch = new ChessMatch();
-        root = new BorderPane();
-        grid = new GridPane();
+	private static final Color LIGHT = Color.web("#f0d9b5");
+	private static final Color DARK = Color.web("#b58863");
+	private static final Color HIGHLIGHT = Color.web("#7fc97f", 0.6);
+	private static final Color SELECTED = Color.web("#f6f669", 0.5);
+	private static final int TIMER_SECONDS = 600;
 
-        setupTimers();
+	public ChessBoardUI() {
+		chessMatch = new ChessMatch();
+		root = new BorderPane();
+		grid = new GridPane();
+		moveHistory = new MoveHistory();
 
-        root.setTop(buildTopBar());
-        root.setCenter(buildBoard());
-        root.setBottom(buildStatusBar());
+		setupTimers();
 
-        whiteTimer.start();
-    }
+		root.setTop(buildTopBar());
+		root.setCenter(buildBoard());
+		root.setBottom(buildStatusBar());
+		root.setRight(moveHistory.getPanel());
 
-    public BorderPane getRoot() {
-        return root;
-    }
+		whiteTimer.start();
+	}
 
-    private void setupTimers() {
-        whiteTimerLabel = new Label();
-        blackTimerLabel = new Label();
+	public BorderPane getRoot() {
+		return root;
+	}
 
-        whiteTimerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
-        blackTimerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
+	private void setupTimers() {
+		whiteTimerLabel = new Label();
+		blackTimerLabel = new Label();
 
-        whiteTimer = new TimerController(whiteTimerLabel, TIMER_SECONDS, () -> {
-            whiteTimerLabel.setText("TIMEOUT!");
-        });
+		whiteTimerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
+		blackTimerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
 
-        blackTimer = new TimerController(blackTimerLabel, TIMER_SECONDS, () -> {
-            blackTimerLabel.setText("TIMEOUT!");
-        });
-    }
+		whiteTimer = new TimerController(whiteTimerLabel, TIMER_SECONDS, () -> {
+			whiteTimerLabel.setText("TIMEOUT!");
+		});
 
-    private HBox buildTopBar() {
-        HBox bar = new HBox(20);
-        bar.setStyle("-fx-background-color: #333; -fx-padding: 10px;");
+		blackTimer = new TimerController(blackTimerLabel, TIMER_SECONDS, () -> {
+			blackTimerLabel.setText("TIMEOUT!");
+		});
+	}
 
-        Label whiteLabel = new Label("WHITE: ");
-        whiteLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+	private HBox buildTopBar() {
+		HBox bar = new HBox(20);
+		bar.setStyle("-fx-background-color: #333; -fx-padding: 10px;");
 
-        Label blackLabel = new Label("BLACK: ");
-        blackLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+		Label whiteLabel = new Label("WHITE: ");
+		whiteLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
 
-        bar.getChildren().addAll(
-            whiteLabel, whiteTimerLabel,
-            blackLabel, blackTimerLabel
-        );
-        return bar;
-    }
+		Label blackLabel = new Label("BLACK: ");
+		blackLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
 
-    private GridPane buildBoard() {
-        grid.getChildren().clear();
-        ChessPiece[][] pieces = chessMatch.getPieces();
+		bar.getChildren().addAll(whiteLabel, whiteTimerLabel, blackLabel, blackTimerLabel);
+		return bar;
+	}
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                StackPane square = new StackPane();
-                square.setPrefSize(80, 80);
+	private GridPane buildBoard() {
+		grid.getChildren().clear();
+		ChessPiece[][] pieces = chessMatch.getPieces();
 
-                Color bg = (row + col) % 2 == 0 ? LIGHT : DARK;
+		for (int row = 0; row < 8; row++) {
+			for (int col = 0; col < 8; col++) {
+				StackPane square = new StackPane();
+				square.setPrefSize(80, 80);
 
-                if (possibleMoves != null && possibleMoves[row][col]) {
-                    bg = HIGHLIGHT;
-                }
+				Color bg = (row + col) % 2 == 0 ? LIGHT : DARK;
 
-                if (sourcePosition != null) {
-                    int sRow = 8 - sourcePosition.getRow();
-                    int sCol = sourcePosition.getColumn() - 'a';
-                    if (row == sRow && col == sCol) {
-                        bg = SELECTED;
-                    }
-                }
+				if (possibleMoves != null && possibleMoves[row][col]) {
+					bg = HIGHLIGHT;
+				}
 
-                square.setStyle("-fx-background-color: " + toHex(bg) + ";");
+				if (sourcePosition != null) {
+					int sRow = 8 - sourcePosition.getRow();
+					int sCol = sourcePosition.getColumn() - 'a';
+					if (row == sRow && col == sCol) {
+						bg = SELECTED;
+					}
+				}
 
-                if (pieces[row][col] != null) {
-                    ImageView iv = getPieceImage(pieces[row][col]);
-                    if (iv != null) square.getChildren().add(iv);
-                }
+				square.setStyle("-fx-background-color: " + toHex(bg) + ";");
 
-                final int r = row, c = col;
-                square.setOnMouseClicked(e -> handleClick(r, c));
-                grid.add(square, col, row);
-            }
-        }
-        return grid;
-    }
+				if (pieces[row][col] != null) {
+					ImageView iv = getPieceImage(pieces[row][col]);
+					if (iv != null)
+						square.getChildren().add(iv);
+				}
 
-    private ImageView getPieceImage(ChessPiece piece) {
-        String color = piece.getColor() == chess.Color.WHITE ? "white" : "black";
-        String letter = piece.toString().toLowerCase();
+				final int r = row, c = col;
+				square.setOnMouseClicked(e -> handleClick(r, c));
+				grid.add(square, col, row);
+			}
+		}
+		return grid;
+	}
 
-        String pieceName = switch (letter) {
-            case "k" -> "king";
-            case "q" -> "queen";
-            case "r" -> "rook";
-            case "b" -> "bishop";
-            case "n" -> "knight";
-            case "p" -> "pawn";
-            default  -> null;
-        };
+	private ImageView getPieceImage(ChessPiece piece) {
+		String color = piece.getColor() == chess.Color.WHITE ? "white" : "black";
+		String letter = piece.toString().toLowerCase();
 
-        if (pieceName == null) return null;
+		String pieceName = switch (letter) {
+		case "k" -> "king";
+		case "q" -> "queen";
+		case "r" -> "rook";
+		case "b" -> "bishop";
+		case "n" -> "knight";
+		case "p" -> "pawn";
+		default -> null;
+		};
 
-        String path = "/resources/images/" + color + "_" + pieceName + ".png";
-        try {
-            Image img = new Image(getClass().getResourceAsStream(path));
-            ImageView iv = new ImageView(img);
-            iv.setFitWidth(70);
-            iv.setFitHeight(70);
-            return iv;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+		if (pieceName == null)
+			return null;
 
-    private void handleClick(int row, int col) {
-        try {
-            if (sourcePosition == null) {
-                sourcePosition = ChessPosition.fromMatrixPosition(row, col);
-                possibleMoves = chessMatch.possibleMoves(sourcePosition);
-                root.setCenter(buildBoard());
-            } else {
-                ChessPosition target = ChessPosition.fromMatrixPosition(row, col);
-                chessMatch.performChessMove(sourcePosition, target);
-                sourcePosition = null;
-                possibleMoves = null;
+		String path = "/resources/images/" + color + "_" + pieceName + ".png";
+		try {
+			Image img = new Image(getClass().getResourceAsStream(path));
+			ImageView iv = new ImageView(img);
+			iv.setFitWidth(70);
+			iv.setFitHeight(70);
+			return iv;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 
-                if (chessMatch.getCurrentPlayer() == chess.Color.WHITE) {
-                    blackTimer.stop();
-                    whiteTimer.start();
-                } else {
-                    whiteTimer.stop();
-                    blackTimer.start();
-                }
+	private void handleClick(int row, int col) {
+		try {
+			if (sourcePosition == null) {
+				sourcePosition = ChessPosition.fromMatrixPosition(row, col);
+				possibleMoves = chessMatch.possibleMoves(sourcePosition);
+				root.setCenter(buildBoard());
+			} else {
+				ChessPosition target = ChessPosition.fromMatrixPosition(row, col);
 
-                root.setCenter(buildBoard());
-                root.setBottom(buildStatusBar());
+				ChessPiece piece = (ChessPiece) chessMatch.getPieces()[8 - sourcePosition.getRow()][sourcePosition
+						.getColumn() - 'a'];
 
-                if (chessMatch.getCheckMate()) {
-                    whiteTimer.stop();
-                    blackTimer.stop();
-                }
-            }
-        } catch (Exception e) {
-            sourcePosition = null;
-            possibleMoves = null;
-            root.setCenter(buildBoard());
-        }
-    }
+				ChessPiece targetPiece = (ChessPiece) chessMatch.getPieces()[8 - target.getRow()][target.getColumn()
+						- 'a'];
+				boolean isCapture = targetPiece != null;
 
-    private HBox buildStatusBar() {
-        HBox bar = new HBox(10);
-        bar.setStyle("-fx-padding: 8px; -fx-background-color: #555;");
-        Label lbl = new Label("Turn: " + chessMatch.getCurrentPlayer());
-        lbl.setStyle("-fx-font-size: 14px; -fx-text-fill: white;");
+				chessMatch.performChessMove(sourcePosition, target);
 
-        if (chessMatch.getCheck()) {
-            Label check = new Label("  CHECK!");
-            check.setStyle("-fx-font-size: 14px; -fx-text-fill: red; -fx-font-weight: bold;");
-            bar.getChildren().addAll(lbl, check);
-        } else {
-            bar.getChildren().add(lbl);
-        }
-        return bar;
-    }
+				moveHistory.addMove(piece.toString(), sourcePosition.toString().trim(), target.toString().trim(),
+						isCapture);
 
-    private String toHex(Color c) {
-        int r = (int)(c.getRed() * 255);
-        int g = (int)(c.getGreen() * 255);
-        int b = (int)(c.getBlue() * 255);
-        double a = c.getOpacity();
-        return "rgba(" + r + "," + g + "," + b + "," + a + ")";
-    }
+				sourcePosition = null;
+				possibleMoves = null;
+
+				if (chessMatch.getCurrentPlayer() == chess.Color.WHITE) {
+					blackTimer.stop();
+					whiteTimer.start();
+				} else {
+					whiteTimer.stop();
+					blackTimer.start();
+				}
+
+				root.setCenter(buildBoard());
+				root.setBottom(buildStatusBar());
+
+				if (chessMatch.getCheckMate()) {
+					whiteTimer.stop();
+					blackTimer.stop();
+				}
+			}
+		} catch (Exception e) {
+			sourcePosition = null;
+			possibleMoves = null;
+			root.setCenter(buildBoard());
+		}
+	}
+
+	private HBox buildStatusBar() {
+		HBox bar = new HBox(10);
+		bar.setStyle("-fx-padding: 8px; -fx-background-color: #555;");
+		Label lbl = new Label("Turn: " + chessMatch.getCurrentPlayer());
+		lbl.setStyle("-fx-font-size: 14px; -fx-text-fill: white;");
+
+		if (chessMatch.getCheck()) {
+			Label check = new Label("  CHECK!");
+			check.setStyle("-fx-font-size: 14px; -fx-text-fill: red; -fx-font-weight: bold;");
+			bar.getChildren().addAll(lbl, check);
+		} else {
+			bar.getChildren().add(lbl);
+		}
+		return bar;
+	}
+
+	private String toHex(Color c) {
+		int r = (int) (c.getRed() * 255);
+		int g = (int) (c.getGreen() * 255);
+		int b = (int) (c.getBlue() * 255);
+		double a = c.getOpacity();
+		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+	}
 }
