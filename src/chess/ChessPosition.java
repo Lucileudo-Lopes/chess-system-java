@@ -31,6 +31,12 @@ public class ChessPosition {
 		return new ChessPosition((char)('a' + position.getColumn()), 8 - position.getRow());
 	}
 	
+	public static ChessPosition fromMatrixPosition(
+	        int row, int col) {
+	    return new ChessPosition(
+	        (char)('a' + col), 8 - row);
+	}
+	
 	@Override
 	public String toString() {
 		return " " + column + row;
